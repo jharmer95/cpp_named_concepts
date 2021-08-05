@@ -33,7 +33,7 @@ concept Container = requires(C a, C b, C&& rv)
     { C(a) } -> std::same_as<C>;
     { C(rv) } -> std::same_as<C>;
     { a = b } -> std::same_as<C&>;
-    { a = rv } -> std::same_as<C>;
+    { a = rv } -> std::same_as<C&>;
     { a.~C() } -> std::same_as<void>;
     { a.begin() } -> details::same_as_either<typename C::iterator, typename C::const_iterator>;
     { a.end() } -> details::same_as_either<typename C::iterator, typename C::const_iterator>;
@@ -51,10 +51,14 @@ concept Container = requires(C a, C b, C&& rv)
 
 #ifdef CONCEPTS_TESTING
 
+#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
+static_assert(concepts::Container<std::map<int, std::string>>);
 static_assert(concepts::Container<std::string>);
+static_assert(concepts::Container<std::unordered_map<int, std::string>>);
 static_assert(concepts::Container<std::vector<int>>);
 static_assert(concepts::Container<std::vector<std::string>>);
 

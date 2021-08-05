@@ -9,29 +9,22 @@
 
 namespace concepts
 {
-template<template<typename> typename A, typename T>
-concept Allocator = requires(A<T> a, A<T> a1, T* p,
-    const T* cp, void* vp,
-    const void* cvp, T r,
-    typename std::allocator_traits<A<T>>::size_type n)
+template<typename A>
+concept Allocator = requires(A a, A a1, typename A::value_type* p, const typename A::value_type* cp,
+    typename A::value_type r, typename std::allocator_traits<A>::size_type n)
 {
-    requires NullablePointer<T*> && LegacyRandomAccessIterator<T*> && LegacyContiguousIterator<T*>;
-    requires NullablePointer<const T*> && LegacyRandomAccessIterator<const T*> && LegacyContiguousIterator<const T*>;
-    requires NullablePointer<void*>;
-    requires NullablePointer<const void*>;
-    typename A<T>::value_type;
+    { *p } -> std::same_as<typename A::value_type&>;
+    { *cp } -> std::same_as<const typename A::value_type&>;
 
-    { *p } -> std::same_as<T&>;
-    { *cp } -> std::same_as<const T&>;
-    { static_cast<T*>(vp) };
-    { static_cast<const T*>(cvp) };
-
-    { std::pointer_traits<T*>::pointer_to(r) };
-    { a.allocate(n) } -> std::same_as<T*>;
+    { std::pointer_traits<typename A::value_type*>::pointer_to(r) };
+    { a.allocate(n) } -> std::same_as<typename A::value_type*>;
     { a.deallocate(p, n) };
 
     { a == a1 } -> std::same_as<bool>;
     { a != a1 } -> std::same_as<bool>;
+
+    { A(a) } noexcept;
+    { A(std::move(a)) } noexcept;
 };
 } // namespace concepts
 
@@ -41,9 +34,9 @@ concept Allocator = requires(A<T> a, A<T> a1, T* p,
 #include <memory_resource>
 #include <string>
 
-static_assert(concepts::Allocator<std::allocator, std::byte>);
-static_assert(concepts::Allocator<std::allocator, std::string>);
-static_assert(concepts::Allocator<std::pmr::polymorphic_allocator, std::byte>);
-static_assert(concepts::Allocator<std::pmr::polymorphic_allocator, std::string>);
+static_assert(concepts::Allocator<std::allocator<std::byte>>);
+static_assert(concepts::Allocator<std::allocator<std::string>>);
+static_assert(concepts::Allocator<std::pmr::polymorphic_allocator<std::byte>>);
+static_assert(concepts::Allocator<std::pmr::polymorphic_allocator<std::string>>);
 
 #endif
